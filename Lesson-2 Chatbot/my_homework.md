@@ -4,7 +4,7 @@ I created this homework in a separate repository.
 
 You can find the complete implementation here:
 
-**Repository:** https://github.com/Sanjarbek1024/production-chat-api.git
+**Repository:** https://github.com/Sanjarbek1024/production-chat.git
 
 ---
 
