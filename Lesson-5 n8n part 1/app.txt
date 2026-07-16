@@ -1,0 +1,35 @@
+Telegram
+    │
+    ▼
+Telegram Trigger (n8n)
+    │
+    ▼
+AI Agent
+    │
+    ├── Chat Memory (PostgreSQL)
+    ├── SQL Generator
+    ├── PostgreSQL Tool
+    └── Response Formatter
+    │
+    ▼
+Telegram Reply
+
+
+
+----------------------------------------
+
+telegram-sql-ai-agent/
+│
+├── database/
+│   ├── schema.sql
+│   ├── seed.sql
+│   └── README.md
+│
+├── n8n/
+│   └── workflow.json
+│
+├── docs/
+│   ├── architecture.png
+│   └── screenshots/
+│
+└── README.md
