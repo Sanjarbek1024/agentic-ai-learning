@@ -1,0 +1,202 @@
+{
+  "name": "My workflow",
+  "nodes": [
+    {
+      "parameters": {
+        "updates": [
+          "message"
+        ],
+        "additionalFields": {}
+      },
+      "type": "n8n-nodes-base.telegramTrigger",
+      "typeVersion": 1.4,
+      "position": [
+        0,
+        0
+      ],
+      "id": "273490b5-cd68-41a0-b685-b72e1d2067be",
+      "name": "Telegram Trigger",
+      "webhookId": "9e94143f-ff12-4767-87bb-1e6baedc5fda",
+      "credentials": {
+        "telegramApi": {
+          "id": "VWufYOelmAWVWQfr",
+          "name": "Telegram account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "={{ $json.message.text }}",
+        "options": {
+          "systemMessage": "You are an AI assistant connected to a PostgreSQL database.\n\nDatabase schema:\n\nTable: users\n- id (integer, primary key)\n- telegram_id (bigint)\n- full_name (text)\n- username (text)\n- phone (text)\n- created_at (timestamp)\n\nTable: products\n- id (integer, primary key)\n- name (text)\n- category (text)\n- price (numeric)\n- stock (integer)\n\nTable: orders\n- id (integer, primary key)\n- user_id (integer, references users.id)\n- status (text)\n- total (numeric)\n- created_at (timestamp)\n\nTable: order_items\n- id (integer, primary key)\n- order_id (integer, references orders.id)\n- product_id (integer, references products.id)\n- quantity (integer)\n- price (numeric)\n\nInstructions:\n\n- Answer in the same language as the user.\n- Use the PostgreSQL tool whenever the answer depends on database data.\n- Never invent database records.\n- Prefer SELECT queries.\n- Only use INSERT, UPDATE or DELETE when the user explicitly requests to modify data.\n- Use JOINs when data spans multiple tables.\n- If the user's request is unclear, ask one short clarifying question.\n- Do not expose SQL queries unless the user explicitly asks for them.\n- Summarize query results in natural language.\n- Keep responses concise.\n\nRelationship summary:\n\n- One user can have many orders.\n- One order can have many order_items.\n- One product can appear in many order_items.\n- orders.user_id -> users.id\n- order_items.order_id -> orders.id\n- order_items.product_id -> products.id"
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3.1,
+      "position": [
+        208,
+        0
+      ],
+      "id": "37c4cce2-5b90-4ca7-b552-44ff87c5c3e6",
+      "name": "AI Agent"
+    },
+    {
+      "parameters": {
+        "model": "openai/gpt-oss-120b",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGroq",
+      "typeVersion": 1,
+      "position": [
+        112,
+        208
+      ],
+      "id": "c8fc011c-7e41-4523-b908-b7d4959c1023",
+      "name": "Groq Chat Model",
+      "credentials": {
+        "groqApi": {
+          "id": "QfBu48YIxOWi6qPJ",
+          "name": "Groq account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $('Telegram Trigger').item.json.message.from.id }}",
+        "text": "={{ $('AI Agent').item.json.output }}",
+        "additionalFields": {}
+      },
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        512,
+        0
+      ],
+      "id": "d4bf0664-1d05-4647-9cea-2dc9df1805a2",
+      "name": "Send a text message",
+      "webhookId": "3da03e69-fd87-45ca-96b4-cce55d041d7a",
+      "credentials": {
+        "telegramApi": {
+          "id": "VWufYOelmAWVWQfr",
+          "name": "Telegram account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "sessionIdType": "customKey",
+        "sessionKey": "={{ $json.message.from.id }}"
+      },
+      "type": "@n8n/n8n-nodes-langchain.memoryPostgresChat",
+      "typeVersion": 1.4,
+      "position": [
+        272,
+        208
+      ],
+      "id": "72e68324-b3b8-4f55-a3c2-417aa7dc5ada",
+      "name": "Postgres Chat Memory",
+      "credentials": {
+        "postgres": {
+          "id": "qRTThsBa1lRH23yc",
+          "name": "Postgres account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "descriptionType": "manual",
+        "toolDescription": "Execute SQL queries on the PostgreSQL database.\n\nUse this tool whenever the user asks about users, products, orders, inventory, reports or any data stored in the database.\n\nGenerate valid PostgreSQL SQL only.\n\nNever fabricate database results.",
+        "operation": "executeQuery",
+        "query": "{{ $fromAI(\"query\", \"Valid PostgreSQL SQL query\") }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.postgresTool",
+      "typeVersion": 2.6,
+      "position": [
+        496,
+        208
+      ],
+      "id": "f19359da-e51c-47c0-8376-e147b6831f3e",
+      "name": "Execute a SQL query in Postgres",
+      "credentials": {
+        "postgres": {
+          "id": "qRTThsBa1lRH23yc",
+          "name": "Postgres account"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Telegram Trigger": {
+      "main": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Groq Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Agent": {
+      "main": [
+        [
+          {
+            "node": "Send a text message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Postgres Chat Memory": {
+      "ai_memory": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_memory",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Execute a SQL query in Postgres": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "availableInMCP": false
+  },
+  "versionId": "379df4d5-10d3-4038-b21c-c3883c4e5542",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "e7eb4a633d83c4a1fa2cab34c88b8e4fa6eed5cf361fa20cb79e889543f92572"
+  },
+  "nodeGroups": [],
+  "id": "b48yOTKw51A5iMYd",
+  "tags": []
+}
